@@ -123,3 +123,100 @@ summary_stats <- analyse_df %>%
 write_csv(summary_stats, "summary_by_cohort.csv")
 
 
+# 6) Investigate ECFIES missingness
+
+analyse_df <- analyse_df %>%
+  mutate(ecfies_missing = is.na(ecfies))
+
+# Overall missingness
+ecfies_missing_overall <- analyse_df %>%
+  summarise(
+    n = n(),
+    missing_n = sum(ecfies_missing),
+    missing_pct = mean(ecfies_missing)
+  )
+
+write_csv(ecfies_missing_overall, "ecfies_missing_overall.csv")
+
+# Missingness by cohort
+ecfies_missing_by_cohort <- analyse_df %>%
+  group_by(cohort) %>%
+  summarise(
+    n = n(),
+    missing_n = sum(ecfies_missing),
+    missing_pct = mean(ecfies_missing),
+    .groups = "drop"
+  )
+
+write_csv(ecfies_missing_by_cohort, "ecfies_missing_by_cohort.csv")
+
+# Missingness by governorate
+ecfies_missing_by_governorate <- analyse_df %>%
+  group_by(governorate) %>%
+  summarise(
+    n = n(),
+    missing_n = sum(ecfies_missing),
+    missing_pct = mean(ecfies_missing),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(missing_pct))
+
+write_csv(ecfies_missing_by_governorate, "ecfies_missing_by_governorate.csv")
+
+# Missingness by cohort + governorate
+ecfies_missing_by_cohort_governorate <- analyse_df %>%
+  group_by(cohort, governorate) %>%
+  summarise(
+    n = n(),
+    missing_n = sum(ecfies_missing),
+    missing_pct = mean(ecfies_missing),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(missing_pct))
+
+write_csv(ecfies_missing_by_cohort_governorate, "ecfies_missing_by_cohort_governorate.csv")
+
+# "Is missingness associated with observed variables?" (logistic regression)
+ecfies_missing_model <- glm(
+  ecfies_missing ~ cohort + governorate + sampling_framework + head_hh_gender + sum_hh_members,
+  data = analyse_df,
+  family = binomial()
+)
+
+summary(ecfies_missing_model)
+
+# Export odds ratios (easier to interpret than log-odds)
+install.packages("broom", quiet = TRUE)
+library(broom)
+
+ecfies_missing_or <- broom::tidy(ecfies_missing_model, exponentiate = TRUE, conf.int = TRUE) %>%
+  rename(odds_ratio = estimate)
+
+write_csv(ecfies_missing_or, "ecfies_missing_model_odds_ratios.csv")
+
+# 7) Sensitivity checks: adjusted comparisons
+
+# Adjusted model for FCS
+fcs_model <- lm(
+  fcs ~ cohort + sum_hh_members + governorate + sampling_framework + head_hh_gender,
+  data = analyse_df
+)
+
+fcs_model_cohort <- broom::tidy(fcs_model, conf.int = TRUE) %>%
+  filter(grepl("^cohort", term))
+
+write_csv(broom::tidy(fcs_model, conf.int = TRUE), "fcs_model_full.csv")
+write_csv(fcs_model_cohort, "fcs_model_cohort_terms.csv")
+
+# Adjusted model for ECFIES (drops missing automatically via na.omit on model frame)
+ecfies_model <- lm(
+  ecfies ~ cohort + sum_hh_members + governorate + sampling_framework + head_hh_gender,
+  data = analyse_df
+)
+
+ecfies_model_cohort <- broom::tidy(ecfies_model, conf.int = TRUE) %>%
+  filter(grepl("^cohort", term))
+
+write_csv(broom::tidy(ecfies_model, conf.int = TRUE), "ecfies_model_full.csv")
+write_csv(ecfies_model_cohort, "ecfies_model_cohort_terms.csv")
+

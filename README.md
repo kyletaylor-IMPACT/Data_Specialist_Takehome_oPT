@@ -1,7 +1,8 @@
 # WANP Data Analysis Exercise
+
 This repository contains my submission for the WANP Data Analysis Exercise. Using the **January 2026 remote round** dataset, I assess whether **combining Cohort 1 (initially assessed June 2024)** and **Cohort 2 (initially assessed November 2025)** into a single analytical cohort is a statistically sound decision.
 
-The analysis is intentionally **focused**: I prioritised variables most relevant to **representativeness** (sampling structure / demographics) and a small set of **headline outcomes**.
+The analysis is intentionally **focused**, in line with the guidance for a non-exhaustive exercise. I prioritised variables most relevant to **sample representativeness** (sampling structure and basic demographics) and a small set of **headline food security outcomes** used for operational decision-making.
 
 ---
 
@@ -10,150 +11,146 @@ The analysis is intentionally **focused**: I prioritised variables most relevant
 - Dataset: `Walloland_WANP_clean_data.xlsx`
 - Unit of analysis: Household
 - Analysis is **unweighted** (no survey weights provided), per instructions.
-- Composite indicators are assumed correct, per instructions.
+- Composite and derived indicators are assumed correct, per instructions.
 
 ### Sample size by cohort
 - **Cohort 1:** 714 households (**38.2%**)
 - **Cohort 2:** 1,155 households (**61.8%**)
 
-(From `cohort_counts.csv`.)
-
 ---
 
 ## Methodology (scoped)
 
-### 1) Data quality check
-I reviewed missingness for key analysis variables to understand any limitations in inference.
+### 1) Data quality and missingness
+I reviewed missingness for key structural and outcome variables to identify potential limitations for inference.
 
-### 2) Cohort comparability on structural variables (representativeness proxies)
-I compared cohorts on variables linked to sampling design and household composition:
+### 2) Cohort comparability on structural variables
+To assess whether the combined sample remains representative, I compared cohorts on variables closely linked to the original sampling design:
+
 - `governorate`
 - `sampling_framework` (building/shelter type)
 - `head_hh_gender`
 - `sum_hh_members` (household size)
 
 Tests used:
-- Categorical: **Chi-square** + **Cramér’s V** (effect size)
-- Continuous: **Two-sample t-test** + **Cohen’s d** (effect size)
+- **Categorical:** Chi-square tests with **Cramér’s V**
+- **Continuous:** Two-sample t-tests with **Cohen’s d**
 
-### 3) Cohort comparability on outcomes (headline indicators)
+### 3) Cohort comparability on outcome indicators
 Within time constraints, I compared cohorts on:
 - `fcs` (Food Consumption Score)
 - `ecfies` (Early Childhood Feeding Insecurity Score)
 
-In addition, the dataset included an `hhs` field treated as categorical in the script outputs (chi-square + Cramér’s V).
+The dataset also includes an `hhs` variable, analysed as categorical using chi-square tests.
+
+### 4) Sensitivity checks
+To test the robustness of results:
+- I investigated **ECFIES missingness patterns** by cohort and context
+- I estimated **adjusted regression models** for outcomes, controlling for household size and key structural variables
 
 ---
 
 ## Results
 
-### Missingness (key variables)
-- `ecfies` has **very high missingness**: **66.1%** missing (1,235 records).
-- `hhs` missing: **0.6%** (11)
-- `fcs` missing: **0.3%** (5)
-- Structural variables (`cohort`, `governorate`, `sampling_framework`, `head_hh_gender`, `sum_hh_members`) have **0% missingness**.
+### Missingness
 
-(From `missingness.csv`.)
+- `ecfies` shows **very high missingness**: **66.1%**
+- `hhs` missing: **0.6%**
+- `fcs` missing: **0.3%**
+- Structural variables have **no missingness**
 
-**Implication:** ECFIES comparisons should be interpreted cautiously due to substantial missing data.
+Given the high proportion of missing ECFIES values, any inference using this indicator must be interpreted cautiously.
+
+#### ECFIES missingness patterns
+ECFIES missingness was examined by cohort and governorate, and through a logistic regression with missingness as the outcome.
+
+Key findings:
+- Missingness rates are high in both cohorts, with **no strong independent association with cohort membership**
+- Missingness is associated with **household size** and some **contextual characteristics** (e.g. shelter type)
+
+These results suggest that ECFIES missingness is **not completely random**, but is driven more by household- and context-level factors than by cohort composition alone.
 
 ---
 
-### Structural comparability (sampling/design-relevant variables)
+### Structural comparability
+
+Cohorts are highly similar across key sampling and demographic variables:
 
 | Variable | p-value | Effect size |
-|---|---:|---:|
+|--------|--------:|-------------|
 | governorate | 0.722 | Cramér’s V = 0.000 |
 | sampling_framework | 0.371 | Cramér’s V = 0.012 |
 | head_hh_gender | 0.530 | Cramér’s V = 0.000 |
 
-(From `categorical_tests.csv`.)
-
-**Interpretation:** Cohorts are **highly similar** in governorate distribution, shelter/building type, and head of household gender. Effect sizes are **negligible**, suggesting minimal risk that combining cohorts would distort representativeness along these dimensions.
+Household size differs by cohort (**p < 0.001**, **Cohen’s d = 0.31**), representing a small-to-moderate difference that may plausibly influence vulnerability indicators.
 
 ---
 
-### Household size
-- `sum_hh_members` differs significantly by cohort (**p = 1.67e-09**) with **Cohen’s d = 0.31**.
+### Outcome indicators (unadjusted)
 
-(From `continuous_tests.csv`.)
-
-**Interpretation:** This is a **small-to-moderate** difference in household size between cohorts. It may reflect cohort composition, differential re-contact/attrition, or evolving population context. Because household size is plausibly associated with vulnerability and food security indicators, it is a key factor to acknowledge and adjust for in interpretation.
+- **FCS:** no meaningful difference (d = 0.056)
+- **ECFIES:** no meaningful difference (d = −0.054), but interpretation limited by missingness
+- **HHS (categorical):** borderline significance (p = 0.067) with small effect size (V = 0.043)
 
 ---
 
-### Outcome indicators
+### Sensitivity checks: adjusted outcome comparisons
 
-- `fcs`: **no meaningful difference** between cohorts  
-  - p = 0.231  
-  - Cohen’s d = 0.056 (very small)
+To assess whether outcome similarities persisted after accounting for compositional differences, I estimated linear regression models for FCS and ECFIES adjusting for:
 
-- `ecfies`: **no meaningful difference** between cohorts (but high missingness)  
-  - p = 0.505  
-  - Cohen’s d = -0.054 (very small)  
-  - **66% missingness** limits confidence in this comparison
+- Household size
+- Governorate
+- Shelter type
+- Head of household gender
 
-(From `continuous_tests.csv` and `missingness.csv`.)
+**FCS:**  
+Cohort membership was **not significantly associated** with FCS after adjustment, indicating that the absence of cohort differences is robust to basic compositional controls.
 
-- `hhs` (as tested in `categorical_tests.csv`):  
-  - p = 0.0668  
-  - Cramér’s V = 0.0429 (small)
-
-**Interpretation:** The headline outcomes assessed show **no substantive differences** by cohort based on effect sizes. The `hhs` result is borderline on significance but has a **small** effect size. ECFIES results are limited by missingness.
+**ECFIES:**  
+Similarly, no statistically meaningful cohort effect was observed after adjustment. However, high missingness substantially limits confidence in these estimates.
 
 ---
 
 ## Recommendation
 
-**Recommendation: Combine Cohort 1 and Cohort 2 for January 2026 analysis, with conditions.**
+**Recommendation: Combine Cohort 1 and Cohort 2 for January 2026 analysis, with explicit caveats.**
 
-Based on the variables reviewed, cohorts are **structurally comparable** in terms of governorate, shelter type, and head of household gender, and the key food security outcomes assessed do not show meaningful cohort differences. This supports combining cohorts into a single analytical cohort for reporting and inference.
+The analysis indicates that Cohort 1 and Cohort 2 are **structurally comparable** and that key outcome indicators do not differ meaningfully between cohorts, both before and after adjustment for household size and contextual variables.
 
-**Conditions / caveats:**
-1. **Household size differs (d ≈ 0.31):**  
-   - I recommend retaining `cohort` in the dataset and conducting sensitivity checks or stratified summaries for key indicators where household size may confound results.
-2. **ECFIES has substantial missingness (66%):**  
-   - Any ECFIES-based inference should be clearly caveated; if possible, investigate the cause of missingness and whether it differs by cohort.
-3. **Document cohort implications:**  
-   - Cohort 1 is longitudinal and may be affected by re-contact consent/attrition; this should be noted as a potential selection bias risk even if observed structural differences are small.
+### Conditions for combination
+
+1. **Household size differences:**  
+   Retain `cohort` in the dataset and conduct sensitivity checks where household size may confound results.
+
+2. **High ECFIES missingness:**  
+   Clearly caveat any ECFIES-based findings and avoid strong conclusions without further investigation of missingness mechanisms.
+
+3. **Longitudinal considerations:**  
+   Acknowledge potential selection and attrition bias in Cohort 1 due to re-contact consent dynamics.
 
 ---
 
 ## Assumptions
 
-- Population size and composition remain constant (per instructions).
-- Internal displacement has not occurred.
-- No survey weights available; analysis is **unweighted**.
-- Composite indicators are correct (per instructions).
+- Population size and composition remain constant
+- Internal displacement has occurred
+- No survey weights available
+- Composite indicators are valid
 
 ---
 
 ## Limitations
 
-- The analysis is intentionally **selective** given time guidance.
-- No survey weights prevents a full assessment of population representativeness.
-- Potential selection bias due to re-contact consent/attrition (especially for Cohort 1) cannot be directly tested here.
-- `ecfies` has very high missingness, limiting confidence in that comparison.
-- Some derived/composite variables are not documented in the Kobo tool; per instructions, these were treated as valid indicators.
+- Selective scope consistent with time guidance
+- No weighting limits population inference
+- Missingness in ECFIES constrains interpretation
+- Attrition and consent bias cannot be fully assessed
 
 ---
 
 ## Reproducibility
 
-Run the R script in RStudio from the repository root:
+Run `Analysis.R` in RStudio from the repository root.  
+Outputs are written as CSV files documenting all comparisons and sensitivity checks.
 
-1. Ensure `Walloland_WANP_clean_data.xlsx` is in the project directory
-2. Run the analysis script (e.g., `Analysis.R`)
-3. Outputs are saved as CSV files:
-   - `cohort_counts.csv`
-   - `missingness.csv`
-   - `categorical_tests.csv`
-   - `continuous_tests.csv`
-
----
-
-## What I would do with more time
-- Investigate **ECFIES missingness** (pattern by cohort/governorate, and whether missing-at-random is plausible).
-- Adjust outcome comparisons for household size (and optionally other demographics) using simple regression sensitivity checks.
-- Expand comparisons to a broader set of outcome indicators (using the same framework: composition → outcomes → judgement).
 

@@ -1,7 +1,7 @@
 # WANP Data Analysis Exercise
 This repository contains my submission for the WANP Data Analysis Exercise. Using the **January 2026 remote round** dataset, I assess whether **combining Cohort 1 (initially assessed June 2024)** and **Cohort 2 (initially assessed November 2025)** into a single analytical cohort is a statistically sound decision.
 
-The analysis is intentionally **focused** (consistent with the ~3-hour guidance): I prioritised variables most relevant to **representativeness** (sampling structure / demographics) and a small set of **headline outcomes**.
+The analysis is intentionally **focused**: I prioritised variables most relevant to **representativeness** (sampling structure / demographics) and a small set of **headline outcomes**.
 
 ---
 
@@ -78,7 +78,7 @@ In addition, the dataset included an `hhs` field treated as categorical in the s
 
 (From `continuous_tests.csv`.)
 
-**Interpretation:** This is a **small-to-moderate** difference in household size between cohorts. It may reflect cohort composition, differential re-contact/attrition, or evolving population context. Because household size is plausibly associated with vulnerability and food security indicators, it is a key factor to acknowledge and (ideally) adjust for in interpretation.
+**Interpretation:** This is a **small-to-moderate** difference in household size between cohorts. It may reflect cohort composition, differential re-contact/attrition, or evolving population context. Because household size is plausibly associated with vulnerability and food security indicators, it is a key factor to acknowledge and adjust for in interpretation.
 
 ---
 
@@ -122,7 +122,7 @@ Based on the variables reviewed, cohorts are **structurally comparable** in term
 ## Assumptions
 
 - Population size and composition remain constant (per instructions).
-- Internal displacement has occurred.
+- Internal displacement has not occurred.
 - No survey weights available; analysis is **unweighted**.
 - Composite indicators are correct (per instructions).
 
